@@ -1,12 +1,8 @@
-# 🌞 Sasol Solar Challenge – Day 2 Master Equation Dashboard
+🌞 Sasol Solar Challenge – Day 2 Master Equation Dashboard
+A modular analysis and visualization toolkit for the Sasol Solar Challenge Day 2 stage. This project couples a physics‑based master power‑balance equation with high‑resolution route data and a Gaussian solar model to produce a publication‑ready dashboard of velocity, SOC, power, forces, and energy over the Sasolburg → Zeerust route plus loops.
 
-A modular analysis and visualization toolkit for the Sasol Solar Challenge Day 2 stage. This project couples a physics‑based master power‑balance equation with high‑resolution route data and a Gaussian solar model to produce a **publication‑ready dashboard** of velocity, SOC, power, forces, and energy over the **Sasolburg → Zeerust** route plus loops. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/128877345/f4219e90-c3ae-4c68-be67-7d394240510c/visualizer.py)
-
-***
-
-## System Architecture
-
-```bash
+System Architecture
+bash
 sasol_solar_day2/
 ├── solar_model.py      # Solar irradiance + panel power (Gaussian model)
 ├── physics.py          # Vehicle forces: aero, rolling, grade  (imported)
@@ -18,12 +14,8 @@ sasol_solar_day2/
 ├── outputs/
 │   └── strategy_report.txt  # Example master‑equation summary
 └── 09_dashboard.jpg    # Sample dashboard output
-```
-
-
-### Data & Model Flow
-
-```text
+Data & Model Flow
+text
 route_data.csv ─────► route_df (distance, altitude, slope)
                           │
                           ▼
@@ -39,41 +31,33 @@ solar_model.py ───► P_solar(t), GHI/DNI/DHI, cos(θ)
                           │
                           ▼
       9 PNG plots + Day‑2 master dashboard (dark theme)
-```
-
-
-***
-
-## Installation
-
-```bash
+Installation
+bash
 pip install numpy pandas matplotlib
-```
+The code assumes local physics.py and constants.py modules are on the Python path, providing vehicle parameters, race start/end times, and battery/limit settings.
 
-
-> The code assumes local `physics.py` and `constants.py` modules are on the Python path, providing vehicle parameters, race start/end times, and battery/limit settings. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/128877345/f4219e90-c3ae-4c68-be67-7d394240510c/visualizer.py)
-
-***
-
-## Usage
-
-### 1. Prepare inputs
-
+Usage
+1. Prepare inputs
 You need time‑series data for:
 
-- `times` – seconds since midnight SAST  
-- `velocity_ms` – vehicle speed (m/s)  
-- `soc` – battery SOC as fraction (0–1)  
-- `solar_W`, `drive_W`, `aux_W` – solar array output, drivetrain demand, and auxiliary load (W)  
-- `route_df` – `pandas.DataFrame` from `data/route_data.csv` with `cumulativedistancem`, `altitudem`, `slopepct` columns  
-- `events` – list of control‑stop / loop‑segment dicts  
-- `result_summary` – dict with `total_dist_km`, `n_loops`, `final_soc`, `arrival_time_s` (for the footer line)  
+times – seconds since midnight SAST
 
-You can generate consistent solar input using `solar_model.solar_profile(...)`. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/128877345/958739dd-dd30-46ad-a66c-ca56144a1c13/route_data.csv)
+velocity_ms – vehicle speed (m/s)
 
-### 2. Generate all figures
+soc – battery SOC as fraction (0–1)
 
-```python
+solar_W, drive_W, aux_W – solar array output, drivetrain demand, and auxiliary load (W)
+
+route_df – pandas.DataFrame from data/route_data.csv with cumulativedistancem, altitudem, slopepct columns
+
+events – list of control‑stop / loop‑segment dicts
+
+result_summary – dict with total_dist_km, n_loops, final_soc, arrival_time_s (for the footer line)
+
+You can generate consistent solar input using solar_model.solar_profile(...).
+
+2. Generate all figures
+python
 import pandas as pd
 from visualizer import generate_all_plots
 from solar_model import solar_profile
@@ -112,81 +96,125 @@ paths = generate_all_plots(
 )
 
 print("Saved plots:", paths)
-```
+All PNGs are written into plots/ (created automatically if it does not exist).
 
-
-All PNGs are written into `plots/` (created automatically if it does not exist). [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/128877345/f4219e90-c3ae-4c68-be67-7d394240510c/visualizer.py)
-
-***
-
-## Phase 1: Solar & Route Models
-
-### Gaussian Solar Irradiance
-
-`solar_model.py` implements a smooth diurnal curve for **Global Horizontal Irradiance** \(G(t)\), then splits it into **DNI** and **DHI**, and projects onto the array using an approximate incidence model for a horizontal car roof in South Africa in October. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/128877345/71d64d8a-8d8f-4f56-ad31-cfc784d60bb4/solar_model.py)
+Phase 1: Solar & Route Models
+Gaussian Solar Irradiance
+solar_model.py implements a smooth diurnal curve for Global Horizontal Irradiance 
+G
+(
+t
+)
+G(t), then splits it into DNI and DHI, and projects onto the array using an approximate incidence model for a horizontal car roof in South Africa in October.
 
 Core pieces:
 
-- `ghi_Wm2(t)` – Gaussian GHI vs time (clamped at zero outside daylight). [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/128877345/71d64d8a-8d8f-4f56-ad31-cfc784d60bb4/solar_model.py)
-- `dni_dhi_Wm2(t)` – Partition of GHI into direct and diffuse components via a constant diffuse fraction. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/128877345/71d64d8a-8d8f-4f56-ad31-cfc784d60bb4/solar_model.py)
-- `cos_incidence(t)` – Sinusoidal variation of incidence angle between sunrise and sunset (06:00–18:00), centred on solar noon. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/128877345/71d64d8a-8d8f-4f56-ad31-cfc784d60bb4/solar_model.py)
-- `solar_power_W(t)` – Net electrical panel power using area and efficiency from `constants.py`. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/128877345/71d64d8a-8d8f-4f56-ad31-cfc784d60bb4/solar_model.py)
+ghi_Wm2(t) – Gaussian GHI vs time (clamped at zero outside daylight).
 
-### Route & Elevation
+dni_dhi_Wm2(t) – Partition of GHI into direct and diffuse components via a constant diffuse fraction.
 
-`route_data.csv` contains the fixed **Sasolburg → Zeerust** route and loop section sampled at fine spatial resolution. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/128877345/958739dd-dd30-46ad-a66c-ca56144a1c13/route_data.csv)
+cos_incidence(t) – Sinusoidal variation of incidence angle between sunrise and sunset (06:00–18:00), centred on solar noon.
+
+solar_power_W(t) – Net electrical panel power using area and efficiency from constants.py.
+
+Route & Elevation
+route_data.csv contains the fixed Sasolburg → Zeerust route and loop section sampled at fine spatial resolution.
 
 Columns include:
 
-- `latitude`, `longitude` – GPS coordinates  
-- `cumulativedistancem` – distance from start (m)  
-- `altitudem` – elevation (m)  
-- `bearingdeg` – track heading  
-- `slopepct` – grade between samples (%)  
+latitude, longitude – GPS coordinates
 
-The visualizer uses this for elevation plots and for decomposing road‑load into aero, rolling, and grade components along the distance axis. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/128877345/958739dd-dd30-46ad-a66c-ca56144a1c13/route_data.csv)
+cumulativedistancem – distance from start (m)
 
-***
+altitudem – elevation (m)
 
-## Phase 2: Master Power Balance
+bearingdeg – track heading
 
-The dashboard is built around the **full master power‑balance equation**: [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/128877345/5504f262-3dd6-4353-9ef0-11f66bf1e996/strategy_report.txt)
+slopepct – grade between samples (%)
 
-- **Battery term**: \(V_{\text{batt}} \times C_{\text{rated}} \times \text{SOH} \times d\text{SOC}/dt\).  
-- **Solar term**: \(P_{\text{solar}}(t) = (\text{DNI}\cdot\cos\theta + \text{DHI}) A_{\text{panel}} \eta_{\text{solar}}\).  
-- **Drivetrain term**: power from aero drag, rolling resistance, and grade forces times speed.  
-- **Auxiliary term**: constant loads (lights, telemetry, etc.) via `PAUXILIARY_W`. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/128877345/5504f262-3dd6-4353-9ef0-11f66bf1e996/strategy_report.txt)
+The visualizer uses this for elevation plots and for decomposing road‑load into aero, rolling, and grade components along the distance axis.
 
-`visualizer.py` does not solve the ODEs itself; instead, it expects time‑aligned arrays for all terms and uses them to compute derived quantities like cumulative energy and road‑load decomposition. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/128877345/f4219e90-c3ae-4c68-be67-7d394240510c/visualizer.py)
+Phase 2: Master Power Balance
+The dashboard is built around the full master power‑balance equation:
 
-***
+Battery term: 
+V
+batt
+×
+C
+rated
+×
+SOH
+×
+d
+SOC
+/
+d
+t
+V 
+batt
+​
+ ×C 
+rated
+​
+ ×SOH×dSOC/dt.
 
-## Phase 3: Plots & Dashboard
+Solar term: 
+P
+solar
+(
+t
+)
+=
+(
+DNI
+⋅
+cos
+⁡
+θ
++
+DHI
+)
+A
+panel
+η
+solar
+P 
+solar
+​
+ (t)=(DNI⋅cosθ+DHI)A 
+panel
+​
+ η 
+solar
+​
+ .
 
-`visualizer.py` configures a **dark GitHub‑style theme** and provides both individual plots and a 6‑panel dashboard, all saved as PNG. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/images/128877345/c6744ff1-ab67-4073-b006-ad751277a7e3/09_dashboard.jpg)
+Drivetrain term: power from aero drag, rolling resistance, and grade forces times speed.
 
-### Plots Generated
+Auxiliary term: constant loads (lights, telemetry, etc.) via PAUXILIARY_W.
 
-| File                      | Description |
-|---------------------------|-------------|
-| `01_velocity_profile.png` | Velocity vs time, with 120 km/h limit and control‑stop markers |
-| `02_soc_profile.png`      | SOC (%) vs time, with `MINSOC` floor and violation shading |
-| `03_acceleration_profile.png` | Longitudinal acceleration vs time, with ±acceleration bounds |
-| `04_power_balance.png`   | Solar vs drivetrain vs auxiliary power, net charge/discharge shading |
-| `05_elevation_slope.png` | Elevation vs distance + slope bar chart (uphill vs downhill) |
-| `06_solar_irradiance.png`| GHI/DNI/DHI + incidence cosine and panel power |
-| `07_energy_budget.png`   | Cumulative solar, drivetrain, auxiliary, and net energy (kWh) |
-| `08_force_decomposition.png` | Aero, rolling, and grade forces stacked vs distance |
-| `09_dashboard.png`       | 2×3 master dashboard with headline and footer summary |
- [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/images/128877345/c6744ff1-ab67-4073-b006-ad751277a7e3/09_dashboard.jpg)
+visualizer.py does not solve the ODEs itself; instead, it expects time‑aligned arrays for all terms and uses them to compute derived quantities like cumulative energy and road‑load decomposition.
 
-Each figure uses shared styling: dark background, colored panels, subtle grid, monospace font, and consistent color mapping (blue = velocity/drive, green = SOC/net positive, red = limits/deficit, yellow = solar, orange = grade/uphill, teal = downhill). [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/128877345/f4219e90-c3ae-4c68-be67-7d394240510c/visualizer.py)
+Phase 3: Plots & Dashboard
+visualizer.py configures a dark GitHub‑style theme and provides both individual plots and a 6‑panel dashboard, all saved as PNG.
 
-***
+Plots Generated
+File	Description
+01_velocity_profile.png	Velocity vs time, with 120 km/h limit and control‑stop markers
+02_soc_profile.png	SOC (%) vs time, with MINSOC floor and violation shading
+03_acceleration_profile.png	Longitudinal acceleration vs time, with ±acceleration bounds
+04_power_balance.png	Solar vs drivetrain vs auxiliary power, net charge/discharge shading
+05_elevation_slope.png	Elevation vs distance + slope bar chart (uphill vs downhill)
+06_solar_irradiance.png| GHI/DNI/DHI + incidence cosine and panel power	
+07_energy_budget.png	Cumulative solar, drivetrain, auxiliary, and net energy (kWh)
+08_force_decomposition.png	Aero, rolling, and grade forces stacked vs distance
+09_dashboard.png	2×3 master dashboard with headline and footer summary
 
-## Repository Structure
+Each figure uses shared styling: dark background, colored panels, subtle grid, monospace font, and consistent color mapping (blue = velocity/drive, green = SOC/net positive, red = limits/deficit, yellow = solar, orange = grade/uphill, teal = downhill).
 
-```bash
+Repository Structure
+bash
 ├── solar_model.py          # Gaussian solar + panel model
 ├── visualizer.py           # All plots, dark theme, dashboard
 ├── physics.py              # Forces & unit helpers (imported)
@@ -198,9 +226,4 @@ Each figure uses shared styling: dark background, colored panels, subtle grid, m
 │   └── strategy_report.txt # Example SOC + distance results
 ├── 09_dashboard.jpg        # Example dashboard export
 └── README.md
-```
-
-
-***
-
-*Built for Sasol Solar Challenge analysis and strategy visualization — plug in your own solver, and this repo turns it into a story your race engineers and drivers can read at a glance.*
+Built for Sasol Solar Challenge analysis and strategy visualization — plug in your own solver, and this repo turns it into a story your race engineers and drivers can read at a glance.
