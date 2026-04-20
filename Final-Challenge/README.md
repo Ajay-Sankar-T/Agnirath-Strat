@@ -1,7 +1,3 @@
-You want a concise, polished README in the same narrative/branding style as your example, but adapted to the current, plot‑focused repo. Here is a drop‑in `README.md` you can use.
-
-***
-
 # 🌞 Sasol Solar Challenge – Day 2 Master Equation Dashboard
 
 A modular analysis and visualization toolkit for the Sasol Solar Challenge Day 2 stage. This project couples a physics‑based master power‑balance equation with high‑resolution route data and a Gaussian solar model to produce a **publication‑ready dashboard** of velocity, SOC, power, forces, and energy over the **Sasolburg → Zeerust** route plus loops. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/128877345/f4219e90-c3ae-4c68-be67-7d394240510c/visualizer.py)
