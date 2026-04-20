@@ -1,0 +1,26 @@
+SASOL SOLAR CHALLENGE - DAY 2 RESULTS  (v2: Full Master Equation)
+============================================================
+MASTER POWER BALANCE EQUATION TERMS:
+  V_batt x C_rated x SOH x d(SOC)/dt
+  + (DNI x cos_theta + DHI) x A x eta_solar
+  = [1/eta_m - eta_r] x (m.a.v + 0.5.rho.Cd.A.v^3 + mu.m.g.v.cos + m.g.v.sin)
+  + (P_inverter + P_heat) + (P_lights + P_telemetry + P_other)
+
+BATTERY
+  Voltage       : 130.0 V
+  Capacity      : 38.5 Ah
+  SOH           : 0.97
+  Usable energy : 4855 Wh
+
+AUXILIARY LOADS
+  Total P_aux   : 165 W
+  Energy/day    : 1.485 kWh
+
+RESULTS
+  Route         : 285.0 km
+  Arrival       : 10:22
+  Loops         : 10 x 35 km = 350 km
+  Loop speed    : 65.2 km/h
+  TOTAL DIST    : 635.0 km
+  Final SOC     : 24.8%
+  SOC check     : PASS
